@@ -474,18 +474,15 @@ function handleEnterKey(e) {
         const newDiv = document.createElement('div');
         newDiv.className = 'action';
         editor.appendChild(newDiv);
-        moveCursorTo(newDiv);
+        moveCursorTo(newDiv, 0);
         setCurrentElement('action');
     } else {
-        // Always get the text content and split at the correct offset
-        let text = currentNode.textContent || '';
+        // Calculate offset in the currentNode for the split
         let offset = 0;
-
-        // If the selection is inside a text node, calculate offset
+        let text = '';
         if (range.startContainer.nodeType === 3) {
-            // Calculate offset from start of parent node
-            let node = currentNode;
-            let walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+            // If inside a text node, sum up all text nodes before and add range offset
+            let walker = document.createTreeWalker(currentNode, NodeFilter.SHOW_TEXT, null, false);
             let total = 0;
             let found = false;
             while (walker.nextNode()) {
@@ -497,8 +494,10 @@ function handleEnterKey(e) {
                 }
                 total += n.textContent.length;
             }
+            text = currentNode.textContent || '';
             if (!found) offset = text.length;
         } else {
+            text = currentNode.textContent || '';
             offset = text.length;
         }
 
