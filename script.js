@@ -457,19 +457,18 @@ function newScript() {
 // FIXED: Improved Enter key handling for multiple blank lines
 function handleEnterKey(e) {
     e.preventDefault();
-    
-    // Get selection and range
+
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
-    
+
     const range = selection.getRangeAt(0);
     let currentNode = range.startContainer;
-    
+
     // Find the parent div of the current position
     while (currentNode && currentNode.nodeType !== 1) {
         currentNode = currentNode.parentNode;
     }
-    
+
     if (!currentNode || currentNode === editor) {
         // If we're directly in the editor, create a new action element
         const newDiv = document.createElement('div');
@@ -478,70 +477,65 @@ function handleEnterKey(e) {
         moveCursorTo(newDiv);
         setCurrentElement('action');
     } else {
-        // Split the current node content at cursor position
-        const currentText = currentNode.textContent;
-        const cursorPos = range.startOffset;
-        
-        // If we're in a text node, get the offset within that text
-        let effectiveCursorPos = cursorPos;
-        if (range.startContainer.nodeType === 3) { // Text node
-            effectiveCursorPos = getTextNodeOffset(currentNode, range.startContainer) + cursorPos;
+        // Always get the text content and split at the correct offset
+        let text = currentNode.textContent || '';
+        let offset = 0;
+
+        // If the selection is inside a text node, calculate offset
+        if (range.startContainer.nodeType === 3) {
+            // Calculate offset from start of parent node
+            let node = currentNode;
+            let walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+            let total = 0;
+            let found = false;
+            while (walker.nextNode()) {
+                let n = walker.currentNode;
+                if (n === range.startContainer) {
+                    offset = total + range.startOffset;
+                    found = true;
+                    break;
+                }
+                total += n.textContent.length;
+            }
+            if (!found) offset = text.length;
+        } else {
+            offset = text.length;
         }
-        
-        const textBefore = currentText.substring(0, effectiveCursorPos);
-        const textAfter = currentText.substring(effectiveCursorPos);
-        
+
+        const textBefore = text.substring(0, offset);
+        const textAfter = text.substring(offset);
+
         // Update the current node with text before cursor
         currentNode.textContent = textBefore;
-        
+
         // Determine the type of the next element based on context
         let nextElementType = 'action'; // Default
-        
         switch (currentNode.className) {
-            case 'scene-heading':
-                nextElementType = 'action';
-                break;
-            case 'action':
-                nextElementType = 'action';
-                break;
-            case 'character':
-                nextElementType = 'dialogue';
-                break;
-            case 'dialogue':
-                nextElementType = 'action';
-                break;
-            case 'parenthetical':
-                nextElementType = 'dialogue';
-                break;
-            case 'transition':
-                nextElementType = 'scene-heading';
-                break;
+            case 'scene-heading': nextElementType = 'action'; break;
+            case 'action': nextElementType = 'action'; break;
+            case 'character': nextElementType = 'dialogue'; break;
+            case 'dialogue': nextElementType = 'action'; break;
+            case 'parenthetical': nextElementType = 'dialogue'; break;
+            case 'transition': nextElementType = 'scene-heading'; break;
         }
-        
+
         // Create new element with text after cursor
         const newDiv = document.createElement('div');
         newDiv.className = nextElementType;
         newDiv.textContent = textAfter;
-        
+
         // Insert after current node
         if (currentNode.nextSibling) {
             editor.insertBefore(newDiv, currentNode.nextSibling);
         } else {
             editor.appendChild(newDiv);
         }
-        
-        // If the new div is empty or only contains the text after the cursor,
-        // position the cursor at the beginning of the new div
-        if (!textAfter) {
-            moveCursorTo(newDiv, 0);
-        } else {
-            moveCursorTo(newDiv, 0);
-        }
-        
+
+        // Move cursor to new div
+        moveCursorTo(newDiv, 0);
         setCurrentElement(nextElementType);
     }
-    
-    // Update line numbers after Enter key
+
     updateLineNumbers();
 }
 
