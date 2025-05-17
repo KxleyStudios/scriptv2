@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScriptPad</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Web App capability tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="ScriptPad">
+    <meta name="application-name" content="ScriptPad">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Professional screenplay writing tool for iPad">
+    <!-- App icons -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167x167.png">
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <!-- External libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="toolbar">
+            <div class="logo">ScriptPad</div>
+            <div class="buttons">
+                <button id="newBtn" title="New Script (Ctrl+N)">New</button>
+                <button id="openBtn" title="Open PDF (Ctrl+O)">Open</button>
+                <input type="file" id="fileInput" accept="application/pdf" style="display: none;">
+                <button id="saveBtn" title="Save (Ctrl+S)">Save</button>
+                <button id="exportPdfBtn" title="Export to PDF (Ctrl+E)">Export PDF</button>
+            </div>
+            <div class="format-buttons">
+                <button id="sceneBtn" title="Scene Heading (Ctrl+1)">Scene</button>
+                <button id="actionBtn" title="Action (Ctrl+2)">Action</button>
+                <button id="characterBtn" title="Character (Ctrl+3)">Character</button>
+                <button id="dialogueBtn" title="Dialogue (Ctrl+4)">Dialogue</button>
+                <button id="parentheticalBtn" title="Parenthetical (Ctrl+5)">(Parenthetical)</button>
+                <button id="transitionBtn" title="Transition (Ctrl+6)">Transition</button>
+            </div>
+        </div>
+        
+        <div class="editor-container">
+            <div id="lineNumbers" class="line-numbers"></div>
+            <div id="editor" class="editor" contenteditable="true" spellcheck="true"></div>
+        </div>
+        
+        <div class="status-bar">
+            <div id="wordCount">Words: 0</div>
+            <div id="pageCount">Pages: 1</div>
+            <div id="currentElement">Element: Action</div>
+        </div>
+    </div>
+
+    <div id="pdfPreviewModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>PDF Preview</h2>
+            <div id="pdfViewer"></div>
+        </div>
+    </div>
+
+    <script src="pwa.js" defer></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
