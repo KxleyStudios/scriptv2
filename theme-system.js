@@ -23,6 +23,55 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Improve Enter key handling
     improveEnterKeyHandling();
+    
+    // Define moveCursorTo function globally
+    window.moveCursorTo = function(node, offset = 0) {
+        // Ensure editor has focus
+        document.getElementById('editor').focus();
+        
+        if (!node) return;
+        
+        // Create a new range
+        const range = document.createRange();
+        const selection = window.getSelection();
+        
+        try {
+            if (node.nodeType === 3) { // Text node
+                // Set cursor position in text node
+                range.setStart(node, Math.min(offset, node.textContent.length));
+                range.collapse(true); // Collapse to start point
+            } else if (node.nodeType === 1) { // Element node
+                if (node.childNodes.length > 0) {
+                    // If there's content, place cursor at appropriate position
+                    if (node.firstChild.nodeType === 3) { // If first child is text node
+                        range.setStart(node.firstChild, Math.min(offset, node.firstChild.textContent.length));
+                        range.collapse(true);
+                    } else {
+                        // Place at beginning of first child
+                        range.setStart(node.firstChild, 0);
+                        range.collapse(true);
+                    }
+                } else {
+                    // If empty element, add a text node and place cursor there
+                    const textNode = document.createTextNode('');
+                    node.appendChild(textNode);
+                    range.setStart(textNode, 0);
+                    range.collapse(true);
+                }
+            }
+            
+            // Apply the range to selection
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Update line numbers after moving cursor
+            if (window.updateLineNumbers) {
+                window.updateLineNumbers();
+            }
+        } catch (e) {
+            console.error('Error moving cursor:', e);
+        }
+    };
 });
 
 // Create theme selector dropdown
@@ -65,6 +114,33 @@ function createThemeSelector() {
     const toolbar = document.querySelector('.toolbar');
     const logo = document.querySelector('.logo');
     toolbar.insertBefore(themeSelector, logo.nextSibling);
+    
+    // Add function to update line numbers correctly
+    window.updateLineNumbers = function() {
+        const editor = document.getElementById('editor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        
+        if (!editor || !lineNumbers) return;
+        
+        // Count actual elements in the editor
+        const childElements = editor.children;
+        const totalLines = Math.max(1, childElements.length);
+        
+        // Build line numbers HTML
+        let html = '';
+        for (let i = 1; i <= totalLines; i++) {
+            html += i + '<br>';
+        }
+        lineNumbers.innerHTML = html;
+        
+        // Sync scrolling
+        editor.addEventListener('scroll', function() {
+            lineNumbers.scrollTop = editor.scrollTop;
+        });
+        
+        // Adjust line numbers container height to match editor content
+        lineNumbers.style.height = editor.scrollHeight + 'px';
+    };
 }
 
 // Apply selected theme
@@ -100,6 +176,15 @@ function getSavedTheme() {
     return localStorage.getItem('scriptpad-theme') || 'default';
 }
 
+// Set current script element - globally accessible
+window.setCurrentElement = function(elementType) {
+    const currentElement = document.getElementById('currentElement');
+    if (currentElement) {
+        currentElement.textContent = `Element: ${elementType.charAt(0).toUpperCase() + elementType.slice(1)}`;
+    }
+    window.currentScriptElement = elementType;
+};
+
 // Add subtle animation to the logo
 function animateLogo() {
     const logo = document.querySelector('.logo');
@@ -131,18 +216,84 @@ function addNewLineButton() {
     
     // Add click event handler
     newLineBtn.addEventListener('click', function() {
-        // Simulate an Enter key press
-        const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true
-        });
-        
-        // Send it to the editor
-        document.getElementById('editor').dispatchEvent(enterEvent);
+        // Create a new element based on the current context
+        insertNewLine();
     });
+    
+    // Define the insertNewLine function globally
+    window.insertNewLine = function() {
+        const editor = document.getElementById('editor');
+        const selection = window.getSelection();
+        
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        let currentNode = range.startContainer;
+        
+        // Find the parent div of the current position
+        while (currentNode && currentNode.nodeType !== 1) {
+            currentNode = currentNode.parentNode;
+        }
+        
+        if (!currentNode || currentNode === editor) {
+            // If we're directly in the editor, create a new action element
+            const newDiv = document.createElement('div');
+            newDiv.className = 'action';
+            editor.appendChild(newDiv);
+            window.moveCursorTo(newDiv);
+            if (window.setCurrentElement) window.setCurrentElement('action');
+        } else {
+            // Split the content at cursor position
+            let beforeText = '';
+            let afterText = '';
+            
+            if (range.startContainer.nodeType === 3) { // Text node
+                const textContent = range.startContainer.textContent;
+                beforeText = textContent.substring(0, range.startOffset);
+                afterText = textContent.substring(range.startOffset);
+                
+                // Update text content
+                range.startContainer.textContent = beforeText;
+            }
+            
+            // Create a new empty element after the current one
+            const newDiv = document.createElement('div');
+            
+            // Determine type based on context
+            let nextElementType = 'action'; // Default
+            switch (currentNode.className) {
+                case 'scene-heading': nextElementType = 'action'; break;
+                case 'action': nextElementType = 'action'; break;
+                case 'character': nextElementType = 'dialogue'; break;
+                case 'dialogue': nextElementType = 'action'; break;
+                case 'parenthetical': nextElementType = 'dialogue'; break;
+                case 'transition': nextElementType = 'scene-heading'; break;
+            }
+            
+            newDiv.className = nextElementType;
+            
+            // Add text after cursor to new element if any
+            if (afterText) {
+                newDiv.textContent = afterText;
+            }
+            
+            // Insert the new div after current node
+            if (currentNode.nextSibling) {
+                editor.insertBefore(newDiv, currentNode.nextSibling);
+            } else {
+                editor.appendChild(newDiv);
+            }
+            
+            // Move cursor to new div
+            window.moveCursorTo(newDiv);
+            if (window.setCurrentElement) window.setCurrentElement(nextElementType);
+        }
+        
+        // Update line numbers after inserting new line
+        if (window.updateLineNumbers) {
+            window.updateLineNumbers();
+        }
+    };
 }
 
 // Improve Enter key handling
@@ -156,7 +307,7 @@ function improveEnterKeyHandling() {
         if (e.key === 'Enter') {
             e.preventDefault(); // Prevent default behavior
             
-            // Create a new element based on the current element type
+            // Get selection and range
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
             
@@ -175,7 +326,30 @@ function improveEnterKeyHandling() {
                 editor.appendChild(newDiv);
                 moveCursorTo(newDiv);
                 setCurrentElement('action');
+                updateLineNumbers(); // Update line numbers after adding new element
                 return;
+            }
+            
+            // Get the text before and after the cursor
+            let textBefore = '';
+            let textAfter = '';
+            
+            if (range.startContainer.nodeType === 3) { // Text node
+                const textContent = range.startContainer.textContent;
+                textBefore = textContent.substring(0, range.startOffset);
+                textAfter = textContent.substring(range.startOffset);
+                
+                // Update the text node with only text before cursor
+                range.startContainer.textContent = textBefore;
+                
+                // If there was other content after the cursor in the same node
+                if (currentNode !== editor && textAfter) {
+                    // We'll handle this text in the new element
+                }
+            } else {
+                // Handle case where cursor is at an empty spot
+                textBefore = '';
+                textAfter = '';
             }
             
             // Determine what the next element should be based on screenplay formatting rules
@@ -202,11 +376,16 @@ function improveEnterKeyHandling() {
                     break;
             }
             
-            // Create the new element
+            // Create the new element with text after cursor
             const newDiv = document.createElement('div');
             newDiv.className = nextElementType;
             
-            // Insert after the current node
+            // Only add the text after cursor if there is any
+            if (textAfter) {
+                newDiv.textContent = textAfter;
+            }
+            
+            // Insert new element after the current node
             if (currentNode.nextSibling) {
                 editor.insertBefore(newDiv, currentNode.nextSibling);
             } else {
@@ -223,6 +402,9 @@ function improveEnterKeyHandling() {
             setTimeout(() => {
                 newDiv.style.backgroundColor = '';
             }, 500);
+            
+            // Update line numbers after handling Enter key
+            updateLineNumbers();
             
             // Log for debugging
             console.log('Enter key pressed - created new ' + nextElementType + ' element');
