@@ -1,4 +1,6 @@
-/* General styles */
+/* Theme System and UI Improvements for ScriptPad */
+
+/* Base rounded UI improvements */
 * {
     margin: 0;
     padding: 0;
@@ -6,10 +8,9 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     line-height: 1.6;
-    color: #333;
-    background-color: #f5f5f5;
+    transition: background-color 0.3s, color 0.3s;
     height: 100vh;
     overflow: hidden;
 }
@@ -20,83 +21,325 @@ body {
     height: 100vh;
     max-width: 100%;
     margin: 0 auto;
-    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Toolbar styles */
+/* Toolbar with rounded elements */
 .toolbar {
-    background-color: #2c3e50;
-    color: white;
-    padding: 10px 15px;
+    padding: 12px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    transition: transform 0.2s;
+}
+
+.logo:hover {
+    transform: scale(1.05);
 }
 
 .buttons, .format-buttons {
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
 button {
-    background-color: #3498db;
-    color: white;
     border: none;
-    border-radius: 4px;
-    padding: 8px 12px;
+    border-radius: 30px;
+    padding: 10px 16px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-weight: 600;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Editor styles */
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Theme selector */
+.theme-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.theme-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.theme-selector select {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23131313%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%;
+    background-size: 12px auto;
+    padding-right: 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Editor container */
 .editor-container {
     display: flex;
     flex-grow: 1;
     overflow: hidden;
     position: relative;
-    background-color: #fff;
-    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin: 12px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
 }
 
 .line-numbers {
     width: 50px;
-    background-color: #f9f9f9;
-    border-right: 1px solid #ddd;
-    padding: 10px 5px;
+    padding: 12px 8px;
     text-align: right;
     overflow-y: hidden;
     user-select: none;
     font-family: "Courier New", monospace;
     font-size: 14px;
-    color: #999;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
 }
 
 .editor {
     flex-grow: 1;
-    padding: 10px 20px;
+    padding: 12px 24px;
     overflow-y: auto;
     white-space: pre-wrap;
     font-family: "Courier New", monospace;
     font-size: 14px;
     line-height: 1.5;
-    background-color: white;
     min-height: 100%;
     width: calc(100% - 50px);
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
-/* Script elements styling */
+/* Status bar */
+.status-bar {
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+/* PDF Viewer Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    margin: 5% auto;
+    padding: 25px;
+    border-radius: 12px;
+    width: 80%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.close {
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close:hover,
+.close:focus {
+    transform: scale(1.1);
+}
+
+#pdfViewer {
+    width: 100%;
+    height: 70vh;
+    border-radius: 8px;
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+#pdfViewer canvas {
+    margin: 0 auto;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Theme-specific colors */
+/* Default Theme: Blue Ocean */
+:root {
+    --bg-color: #f5f5f7;
+    --text-color: #333;
+    --toolbar-bg: #3498db;
+    --toolbar-text: #fff;
+    --button-bg: #2980b9;
+    --button-hover: #1c6ea4;
+    --statusbar-bg: #3498db;
+    --statusbar-text: #fff;
+    --editor-bg: #fff;
+    --editor-text: #333;
+    --line-numbers-bg: #f0f0f0;
+    --line-numbers-text: #888;
+    --modal-bg: #fff;
+    --modal-text: #333;
+}
+
+/* Night Owl Theme */
+.theme-night-owl {
+    --bg-color: #011627;
+    --text-color: #d6deeb;
+    --toolbar-bg: #1d3b53;
+    --toolbar-text: #d6deeb;
+    --button-bg: #5f7e97;
+    --button-hover: #82aaff;
+    --statusbar-bg: #1d3b53;
+    --statusbar-text: #d6deeb;
+    --editor-bg: #011627;
+    --editor-text: #d6deeb;
+    --line-numbers-bg: #0e2a3a;
+    --line-numbers-text: #5f7e97;
+    --modal-bg: #1d3b53;
+    --modal-text: #d6deeb;
+}
+
+/* Monokai Theme */
+.theme-monokai {
+    --bg-color: #272822;
+    --text-color: #f8f8f2;
+    --toolbar-bg: #49483e;
+    --toolbar-text: #f8f8f2;
+    --button-bg: #75715e;
+    --button-hover: #a6e22e;
+    --statusbar-bg: #49483e;
+    --statusbar-text: #f8f8f2;
+    --editor-bg: #272822;
+    --editor-text: #f8f8f2;
+    --line-numbers-bg: #3e3d32;
+    --line-numbers-text: #90908a;
+    --modal-bg: #383830;
+    --modal-text: #f8f8f2;
+}
+
+/* Solarized Light Theme */
+.theme-solarized-light {
+    --bg-color: #fdf6e3;
+    --text-color: #657b83;
+    --toolbar-bg: #eee8d5;
+    --toolbar-text: #586e75;
+    --button-bg: #93a1a1;
+    --button-hover: #268bd2;
+    --statusbar-bg: #eee8d5;
+    --statusbar-text: #586e75;
+    --editor-bg: #fdf6e3;
+    --editor-text: #657b83;
+    --line-numbers-bg: #eee8d5;
+    --line-numbers-text: #93a1a1;
+    --modal-bg: #fdf6e3;
+    --modal-text: #657b83;
+}
+
+/* Cotton Candy Theme */
+.theme-cotton-candy {
+    --bg-color: #fff0f5;
+    --text-color: #5a4b81;
+    --toolbar-bg: #c490e4;
+    --toolbar-text: #fff;
+    --button-bg: #ffb8d9;
+    --button-hover: #ea86ff;
+    --statusbar-bg: #c490e4;
+    --statusbar-text: #fff;
+    --editor-bg: #fff;
+    --editor-text: #5a4b81;
+    --line-numbers-bg: #fde9f5;
+    --line-numbers-text: #c490e4;
+    --modal-bg: #fff0f5;
+    --modal-text: #5a4b81;
+}
+
+/* Apply theme colors */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.toolbar {
+    background-color: var(--toolbar-bg);
+    color: var(--toolbar-text);
+}
+
+button {
+    background-color: var(--button-bg);
+    color: var(--toolbar-text);
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+.status-bar {
+    background-color: var(--statusbar-bg);
+    color: var(--statusbar-text);
+}
+
+.editor {
+    background-color: var(--editor-bg);
+    color: var(--editor-text);
+}
+
+.line-numbers {
+    background-color: var(--line-numbers-bg);
+    color: var(--line-numbers-text);
+}
+
+.modal-content {
+    background-color: var(--modal-bg);
+    color: var(--modal-text);
+}
+
+/* Script elements styling with theme consistency */
 .scene-heading {
     text-transform: uppercase;
     font-weight: bold;
@@ -129,65 +372,6 @@ button:hover {
     margin-top: 15px;
 }
 
-/* Status bar */
-.status-bar {
-    background-color: #2c3e50;
-    color: white;
-    padding: 5px 15px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-}
-
-/* PDF Viewer Modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 10;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 5% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-}
-
-#pdfViewer {
-    width: 100%;
-    height: 70vh;
-    border: 1px solid #ddd;
-    overflow-y: auto;
-}
-
-#pdfViewer canvas {
-    margin: 0 auto;
-    display: block;
-}
-
 /* For iPad optimization */
 @media (max-width: 1024px) {
     .toolbar {
@@ -209,14 +393,4 @@ button:hover {
     .editor {
         font-size: 16px;
     }
-}
-
-/* Focus states for accessibility */
-button:focus, .editor:focus {
-    outline: 2px solid #3498db;
-}
-
-/* Current element highlight */
-.current-element {
-    background-color: rgba(52, 152, 219, 0.1);
 }
