@@ -52,16 +52,28 @@ function initializeEditor() {
     setCurrentElement('action');
 }
 
-// Function to update line numbers
+// Improved function to update line numbers
 function updateLineNumbers() {
-    const lines = editor.innerText.split('\n');
-    currentLineCount = lines.length;
+    // Count actual line breaks in the editor content
+    const text = editor.innerHTML;
     
+    // Count both <div> tags and <br> tags for accurate line counting
+    const divCount = (text.match(/<div/g) || []).length;
+    const brCount = (text.match(/<br/g) || []).length;
+    
+    // Calculate total lines - account for the initial div that might not have a matching closing tag
+    const totalLines = Math.max(1, divCount + brCount);
+    currentLineCount = totalLines;
+    
+    // Build line numbers HTML
     let html = '';
-    for (let i = 1; i <= currentLineCount; i++) {
+    for (let i = 1; i <= totalLines; i++) {
         html += i + '<br>';
     }
     lineNumbers.innerHTML = html;
+    
+    // Adjust line numbers container height to match editor content if needed
+    lineNumbers.style.height = editor.scrollHeight + 'px';
 }
 
 // Function to update word and page count
@@ -133,6 +145,7 @@ function formatCurrentElement(elementType) {
     }
     
     setCurrentElement(elementType);
+    updateLineNumbers(); // Update line numbers after formatting
 }
 
 // Move cursor to specified node
@@ -441,6 +454,115 @@ function newScript() {
     updateWordAndPageCount();
 }
 
+// FIXED: Improved Enter key handling for multiple blank lines
+function handleEnterKey(e) {
+    e.preventDefault();
+    
+    // Get selection and range
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    let currentNode = range.startContainer;
+    
+    // Find the parent div of the current position
+    while (currentNode && currentNode.nodeType !== 1) {
+        currentNode = currentNode.parentNode;
+    }
+    
+    if (!currentNode || currentNode === editor) {
+        // If we're directly in the editor, create a new action element
+        const newDiv = document.createElement('div');
+        newDiv.className = 'action';
+        editor.appendChild(newDiv);
+        moveCursorTo(newDiv);
+        setCurrentElement('action');
+    } else {
+        // Split the current node content at cursor position
+        const currentText = currentNode.textContent;
+        const cursorPos = range.startOffset;
+        
+        // If we're in a text node, get the offset within that text
+        let effectiveCursorPos = cursorPos;
+        if (range.startContainer.nodeType === 3) { // Text node
+            effectiveCursorPos = getTextNodeOffset(currentNode, range.startContainer) + cursorPos;
+        }
+        
+        const textBefore = currentText.substring(0, effectiveCursorPos);
+        const textAfter = currentText.substring(effectiveCursorPos);
+        
+        // Update the current node with text before cursor
+        currentNode.textContent = textBefore;
+        
+        // Determine the type of the next element based on context
+        let nextElementType = 'action'; // Default
+        
+        switch (currentNode.className) {
+            case 'scene-heading':
+                nextElementType = 'action';
+                break;
+            case 'action':
+                nextElementType = 'action';
+                break;
+            case 'character':
+                nextElementType = 'dialogue';
+                break;
+            case 'dialogue':
+                nextElementType = 'action';
+                break;
+            case 'parenthetical':
+                nextElementType = 'dialogue';
+                break;
+            case 'transition':
+                nextElementType = 'scene-heading';
+                break;
+        }
+        
+        // Create new element with text after cursor
+        const newDiv = document.createElement('div');
+        newDiv.className = nextElementType;
+        newDiv.textContent = textAfter;
+        
+        // Insert after current node
+        if (currentNode.nextSibling) {
+            editor.insertBefore(newDiv, currentNode.nextSibling);
+        } else {
+            editor.appendChild(newDiv);
+        }
+        
+        // If the new div is empty or only contains the text after the cursor,
+        // position the cursor at the beginning of the new div
+        if (!textAfter) {
+            moveCursorTo(newDiv, 0);
+        } else {
+            moveCursorTo(newDiv, 0);
+        }
+        
+        setCurrentElement(nextElementType);
+    }
+    
+    // Update line numbers after Enter key
+    updateLineNumbers();
+}
+
+// Helper function to get the offset within a parent node
+function getTextNodeOffset(parentNode, textNode) {
+    let offset = 0;
+    const childNodes = parentNode.childNodes;
+    
+    for (let i = 0; i < childNodes.length; i++) {
+        const child = childNodes[i];
+        if (child === textNode) {
+            break;
+        }
+        if (child.nodeType === 3) { // Text node
+            offset += child.textContent.length;
+        }
+    }
+    
+    return offset;
+}
+
 // Event Listeners
 editor.addEventListener('input', function() {
     updateLineNumbers();
@@ -480,67 +602,9 @@ editor.addEventListener('keydown', function(e) {
         document.execCommand('insertHTML', false, '    ');
     }
     
-    // Handle Enter key to create new elements
+    // FIXED: Improved Enter key handling 
     if (e.key === 'Enter') {
-        e.preventDefault();
-        
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return;
-        
-        const range = selection.getRangeAt(0);
-        let currentNode = range.startContainer;
-        
-        // Find the parent div of the current position
-        while (currentNode && currentNode.nodeType !== 1) {
-            currentNode = currentNode.parentNode;
-        }
-        
-        if (!currentNode || currentNode === editor) {
-            // If we're directly in the editor, create a new action element
-            const newDiv = document.createElement('div');
-            newDiv.className = 'action';
-            editor.appendChild(newDiv);
-            moveCursorTo(newDiv);
-            setCurrentElement('action');
-        } else {
-            // Determine the type of the next element based on context
-            let nextElementType = 'action'; // Default
-            
-            switch (currentNode.className) {
-                case 'scene-heading':
-                    nextElementType = 'action';
-                    break;
-                case 'action':
-                    nextElementType = 'action';
-                    break;
-                case 'character':
-                    nextElementType = 'dialogue';
-                    break;
-                case 'dialogue':
-                    nextElementType = 'action';
-                    break;
-                case 'parenthetical':
-                    nextElementType = 'dialogue';
-                    break;
-                case 'transition':
-                    nextElementType = 'scene-heading';
-                    break;
-            }
-            
-            // Create the new element
-            const newDiv = document.createElement('div');
-            newDiv.className = nextElementType;
-            
-            // Insert after current node
-            if (currentNode.nextSibling) {
-                editor.insertBefore(newDiv, currentNode.nextSibling);
-            } else {
-                editor.appendChild(newDiv);
-            }
-            
-            moveCursorTo(newDiv);
-            setCurrentElement(nextElementType);
-        }
+        handleEnterKey(e);
     }
     
     // Keyboard shortcuts with Ctrl key
@@ -590,6 +654,15 @@ editor.addEventListener('keydown', function(e) {
     }
 });
 
+// Update line numbers after paste operations
+editor.addEventListener('paste', function() {
+    // Use setTimeout to ensure content is fully pasted before updating
+    setTimeout(function() {
+        updateLineNumbers();
+        updateWordAndPageCount();
+    }, 0);
+});
+
 // Format button handlers
 sceneBtn.addEventListener('click', () => formatCurrentElement('scene-heading'));
 actionBtn.addEventListener('click', () => formatCurrentElement('action'));
@@ -625,6 +698,15 @@ window.addEventListener('click', (e) => {
 
 // Handle window resize
 window.addEventListener('resize', updateLineNumbers);
+
+// Make sure line numbers match actual content height
+window.addEventListener('load', function() {
+    // Set initial line numbers with proper height
+    updateLineNumbers();
+    
+    // Ensure line numbers container matches editor height
+    lineNumbers.style.height = editor.scrollHeight + 'px';
+});
 
 // Initial setup tasks
 updateLineNumbers();
